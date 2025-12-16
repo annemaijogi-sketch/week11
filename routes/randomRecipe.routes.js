@@ -1,30 +1,57 @@
 const express = require('express');
-const recipeRouter = require('./routes/recipes.routes');
-const ingredientRouter = require('./routes/ingredients.routes');
-const fullRecipesRouter = require('./routes/fullRecipes.routes');
-const randomRouter = require('./routes/randomRecipe.routes');
+const db = require('../db');
+const router = express.Router();
 
-const app = express();
+router.get('/', async (req, res) => {
+  try {
+    // 🔹 võta juhuslik retsept
+    const recipeQuery = `
+      SELECT 
+        id,
+        recipename AS "recipeName",
+        imageurl AS "imageURL",
+        instructions
+      FROM recipe
+      ORDER BY RANDOM()
+      LIMIT 1;
+    `;
 
-// CORS (vajalik GitHub Pagesi jaoks)
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept'
-  );
-  next();
+    const recipeResult = await db.query(recipeQuery);
+
+    if (recipeResult.rows.length === 0) {
+      return res.status(404).json({ errorMessage: 'No recipes found' });
+    }
+
+    const selectedRecipe = recipeResult.rows[0];
+
+    // 🔹 võta koostisosad
+    const ingredientsQuery = `
+      SELECT b.ingredientname AS "ingredientName"
+      FROM ingredient b
+      INNER JOIN IngredientInRecipe c 
+        ON b.id = c.ingredientId
+      WHERE c.recipeId = $1;
+    `;
+
+    const ingredientsResult = await db.query(
+      ingredientsQuery,
+      [selectedRecipe.id]
+    );
+
+    const ingredients = ingredientsResult.rows.map(
+      (row) => row.ingredientName
+    );
+
+    // 🔹 vastus
+    res.json({
+      recipe: selectedRecipe,
+      ingredients: ingredients
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ errorMessage: 'Internal Server error.' });
+  }
 });
 
-// ROUTES
-app.use('/ingredients', ingredientRouter);
-app.use('/recipes', recipeRouter);
-app.use('/fullRecipes', fullRecipesRouter);
-app.use('/random', randomRouter);
-
-// ⚠️ RENDER VAJAB SEDA
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+module.exports = router;
