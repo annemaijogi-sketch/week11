@@ -6,8 +6,7 @@ const randomRouter = require('./routes/randomRecipe.routes');
 
 const app = express();
 
-app.use(express.json());
-
+// CORS (vajalik GitHub Pagesi jaoks)
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header(
@@ -17,18 +16,15 @@ app.use((req, res, next) => {
   next();
 });
 
-/* TEST ROUTE – VÄGA OLULINE */
-app.get('/', (req, res) => {
-  res.send('API is running');
-});
-
+// ROUTES
 app.use('/ingredients', ingredientRouter);
 app.use('/recipes', recipeRouter);
 app.use('/fullRecipes', fullRecipesRouter);
 app.use('/random', randomRouter);
 
-/* ⬇️ RENDER PORT */
+// ⚠️ RENDER VAJAB SEDA
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log('Server running on port', PORT);
+  console.log(`Server is running on port ${PORT}`);
 });
