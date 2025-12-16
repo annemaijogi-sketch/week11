@@ -1,4 +1,5 @@
 const express = require('express');
+
 const recipeRouter = require('./routes/recipes.routes');
 const ingredientRouter = require('./routes/ingredients.routes');
 const fullRecipesRouter = require('./routes/fullRecipes.routes');
@@ -6,7 +7,7 @@ const randomRouter = require('./routes/randomRecipe.routes');
 
 const app = express();
 
-// CORS (vajalik GitHub Pagesi jaoks)
+// CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header(
@@ -22,7 +23,7 @@ app.use('/recipes', recipeRouter);
 app.use('/fullRecipes', fullRecipesRouter);
 app.use('/random', randomRouter);
 
-// ⚠️ RENDER VAJAB SEDA
+// ⚠️ Render port
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
