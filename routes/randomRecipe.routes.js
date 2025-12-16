@@ -1,38 +1,30 @@
 const express = require('express');
-const db = require('../db');
-const router = express.Router();
+const recipeRouter = require('./routes/recipes.routes');
+const ingredientRouter = require('./routes/ingredients.routes');
+const fullRecipesRouter = require('./routes/fullRecipes.routes');
+const randomRouter = require('./routes/randomRecipe.routes');
 
-router.get('/', async (req, res) => {
+const app = express();
 
-    try {
-        const recipeQuery = `
-SELECT id, recipename, imageurl, instructions
-FROM recipe
-ORDER BY RANDOM()
-LIMIT 1;
-`;
-        const recipeResult = await db.query(recipeQuery);
-        const selectedRecipe = recipeResult.rows[0];
-        
-        const ingredientsQuery = 'SELECT b.ingredientName FROM ingredient b INNER JOIN IngredientInRecipe c ON b.id = c.ingredientId WHERE c.recipeId = $1;';
-
-        const ingredientsResult = await db.query(ingredientsQuery, [selectedRecipe.id]);  
-        const ingredients = ingredientsResult.rows.map( element => element.ingredientname);
-        
-        const randomRecipe = {
-            recipe: selectedRecipe,
-            ingredients: ingredients
-        };
-        res.json(randomRecipe);
-
-    }
-    catch(error) {
-        console.log(error);
-        res.status(500).json({errorMessage: 'Internal Server error.'});
-    }
-    
-    
-    
+// CORS (vajalik GitHub Pagesi jaoks)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept'
+  );
+  next();
 });
 
-module.exports = router;
+// ROUTES
+app.use('/ingredients', ingredientRouter);
+app.use('/recipes', recipeRouter);
+app.use('/fullRecipes', fullRecipesRouter);
+app.use('/random', randomRouter);
+
+// ⚠️ RENDER VAJAB SEDA
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
